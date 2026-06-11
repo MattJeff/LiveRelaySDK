@@ -117,7 +117,11 @@ class ConferenceSession(
         // Réserve la place avant l'échange SDP pour éviter les souscriptions concurrentes.
         val existing = subscribePcs.putIfAbsent(peerId, pc)
         if (existing != null) {
-            pc.close()
+            try {
+                pc.close()
+            } finally {
+                pc.dispose()
+            }
             return
         }
 
@@ -137,7 +141,11 @@ class ConferenceSession(
             LatencyTuning.tuneReceivers(pc)
         } catch (e: Exception) {
             subscribePcs.remove(peerId, pc)
-            pc.close()
+            try {
+                pc.close()
+            } finally {
+                pc.dispose()
+            }
             throw e
         }
     }
@@ -154,11 +162,21 @@ class ConferenceSession(
     }
 
     private fun cleanup() {
-        publishPc?.close()
+        publishPc?.let { pc ->
+            try {
+                pc.close()
+            } finally {
+                pc.dispose()
+            }
+        }
         publishPc = null
 
         for ((_, pc) in subscribePcs) {
-            pc.close()
+            try {
+                pc.close()
+            } finally {
+                pc.dispose()
+            }
         }
         subscribePcs.clear()
 

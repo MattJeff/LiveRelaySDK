@@ -129,7 +129,8 @@ class Publisher(
     }
 
     private fun releaseResources() {
-        capture.stop()
+        // Fermer la PeerConnection AVANT de disposer les tracks capturés :
+        // disposer un track encore attaché à un sender actif est un usage natif invalide.
         peerConnection?.let { pc ->
             try {
                 pc.close()
@@ -138,6 +139,7 @@ class Publisher(
             }
         }
         peerConnection = null
+        capture.stop()
         AudioConfigurator.reset(context)
     }
 }
